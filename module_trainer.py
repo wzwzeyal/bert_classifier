@@ -17,6 +17,7 @@ class bert_classifier_trainer():
         self.loss_fn = nn.CrossEntropyLoss()
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
+        self.best_model_name = best_model_name
         
     # Create a function to tokenize a set of texts
     def preprocessing_for_bert(self, data):
