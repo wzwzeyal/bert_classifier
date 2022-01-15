@@ -235,7 +235,7 @@ class bert_classifier_trainer():
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
                     print(f'saving {self.best_model_name}')
-                    torch.save(self.batch_size.state_dict(), self.best_model_name)
+                    torch.save(self.bert_classifier.state_dict(), self.best_model_name)
                     print(' <-- Checkpoint !')
                 else:
                     print('')
