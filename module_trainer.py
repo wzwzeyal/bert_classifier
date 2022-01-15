@@ -78,33 +78,25 @@ class bert_classifier_trainer():
         attention_masks = torch.tensor(attention_masks)
 
         return input_ids, attention_masks 
-        
-    def initialize_model(self, X_train, X_val, y_train, y_val, epochs=4):
-        train_inputs, train_masks = self.preprocessing_for_bert(X_train)
-        val_inputs, val_masks = self.preprocessing_for_bert(X_val)
 
+
+    def initialize_train_data(self, X_train, y_train):
+        train_inputs, train_masks = self.preprocessing_for_bert(X_train)
         train_labels = torch.tensor(y_train.values)
-        val_labels = torch.tensor(y_val.values)
 
         # Create the DataLoader for our training set
         train_data = TensorDataset(train_inputs, train_masks, train_labels)
         train_sampler = RandomSampler(train_data)
         self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
+    def initialize_val_data(self, X_val, y_val):
+        val_inputs, val_masks = self.preprocessing_for_bert(X_val)
+        val_labels = torch.tensor(y_val.values)
+
         # Create the DataLoader for our validation set
         val_data = TensorDataset(val_inputs, val_masks, val_labels)
         val_sampler = SequentialSampler(val_data)
         self.val_dataloader = DataLoader(val_data, sampler=val_sampler, batch_size=self.batch_size)
-
-        self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
-
-        # Total number of training steps
-        total_steps = len(self.train_dataloader) * epochs
-
-        # Set up the learning rate scheduler
-        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
-                                                    num_warmup_steps=0, # Default value
-                                                    num_training_steps=total_steps)
 
     def evaluate(self):
         """After the completion of each training epoch, measure the model's performance
@@ -150,6 +142,14 @@ class bert_classifier_trainer():
         """
         # Start training loop
         print("Start training...\n")
+
+        # Total number of training steps
+        total_steps = len(self.train_dataloader) * epochs
+
+        # Set up the learning rate scheduler
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
+                                                    num_warmup_steps=0, # Default value
+                                                    num_training_steps=total_steps)
 
         best_accuracy = 0
 
