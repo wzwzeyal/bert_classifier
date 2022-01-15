@@ -9,7 +9,7 @@ import time
 
 
 class bert_classifier_trainer():
-    def __init__(self, max_len, batch_size, bert_model_name, best_model_name, epochs=4):
+    def __init__(self, max_len, batch_size, bert_model_name, best_model_name, freeze_bert=False, epochs=4):
         self.max_len  = max_len
         self.batch_size = batch_size
         self.bert_model_name = bert_model_name#initialize_model(bert_model_name, epochs)
@@ -18,6 +18,18 @@ class bert_classifier_trainer():
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
         self.best_model_name = best_model_name
+
+        # Instantiate Bert Classifier
+        self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=freeze_bert)
+
+        # Tell PyTorch to run the model on GPU
+        self.bert_classifier.to(self.device)
+
+        # Create the optimizer
+        self.optimizer = AdamW(self.bert_classifier.parameters(),
+                        lr=5e-5,    # Default learning rate
+                        eps=1e-8    # Default epsilon value
+                        )
         
     # Create a function to tokenize a set of texts
     def preprocessing_for_bert(self, data):
@@ -84,20 +96,6 @@ class bert_classifier_trainer():
         val_sampler = SequentialSampler(val_data)
         self.val_dataloader = DataLoader(val_data, sampler=val_sampler, batch_size=self.batch_size)
 
-
-
-        # Instantiate Bert Classifier
-        self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=False)
-
-        # Tell PyTorch to run the model on GPU
-        self.bert_classifier.to(self.device)
-
-        # Create the optimizer
-        self.optimizer = AdamW(self.bert_classifier.parameters(),
-                        lr=5e-5,    # Default learning rate
-                        eps=1e-8    # Default epsilon value
-                        )
-
         self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
         # Total number of training steps
@@ -108,7 +106,6 @@ class bert_classifier_trainer():
                                                     num_warmup_steps=0, # Default value
                                                     num_training_steps=total_steps)
 
-   
     def evaluate(self):
         """After the completion of each training epoch, measure the model's performance
         on our validation set.
@@ -244,3 +241,4 @@ class bert_classifier_trainer():
             print("\n")
         
         print("Training complete!")
+        return filename
