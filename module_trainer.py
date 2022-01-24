@@ -22,7 +22,11 @@ class bert_classifier_trainer():
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
         self.writer = SummaryWriter(f'.runs/{bert_model_name}')
-        
+        self.bert_classifier = BertClassifierModule(freeze_bert=False)
+        self.optimizer = AdamW(self.bert_classifier.parameters(),
+                      lr=5e-5,    # Default learning rate
+                      eps=1e-8    # Default epsilon value
+                      )
     # Create a function to tokenize a set of texts
     def preprocessing_for_bert(self, data):
         """Perform required preprocessing steps for pretrained BERT.
