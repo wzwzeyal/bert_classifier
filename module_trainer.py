@@ -5,11 +5,7 @@ import numpy as np
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from bert_classifier_repo.module import BertClassifierModule
-from torch.utils.tensorboard import SummaryWriter
 import time
-
-
-
 
 
 class bert_classifier_trainer():
@@ -21,12 +17,20 @@ class bert_classifier_trainer():
         self.loss_fn = nn.CrossEntropyLoss()
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
-        self.writer = SummaryWriter(f'.runs/{bert_model_name}')
-        self.bert_classifier = BertClassifierModule(freeze_bert=False)
+        self.best_model_name = best_model_name
+
+        # Instantiate Bert Classifier
+        self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=freeze_bert)
+
+        # Tell PyTorch to run the model on GPU
+        self.bert_classifier.to(self.device)
+
+        # Create the optimizer
         self.optimizer = AdamW(self.bert_classifier.parameters(),
-                      lr=5e-5,    # Default learning rate
-                      eps=1e-8    # Default epsilon value
-                      )
+                        lr=5e-5,    # Default learning rate
+                        eps=1e-8    # Default epsilon value
+                        )
+        
     # Create a function to tokenize a set of texts
     def preprocessing_for_bert(self, data):
         """Perform required preprocessing steps for pretrained BERT.
@@ -224,10 +228,6 @@ class bert_classifier_trainer():
 
                 print(f"{epoch_i + 1:^7} | {'-':^7} | {avg_train_loss:^12.6f} | {val_loss:^10.6f} | {val_accuracy:^9.2f} | {time_elapsed:^9.2f}", end='')
 
-                self.writer.add_scalars('val_accuracy',
-                { 'val_accuracy' : val_accuracy},
-                epoch_i)
-
                 #-- Save best model (early stopping):
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
@@ -240,5 +240,5 @@ class bert_classifier_trainer():
                 print("-"*70)
             print("\n")
         
-        self.writer.flush()
         print("Training complete!")
+        return filename
