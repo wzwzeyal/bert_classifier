@@ -136,7 +136,7 @@ class bert_classifier_trainer():
         # Compute the average accuracy and loss over the validation set.
         val_loss = np.mean(val_loss)
         val_accuracy = np.mean(val_accuracy)
-        f1 = f1_score(b_labels, preds, average='weighted')
+        f1 = f1_score(b_labels.data.to('cpu'), preds.data.to('cpu'), average='weighted')
 
         return val_loss, val_accuracy, f1
 
@@ -231,10 +231,6 @@ class bert_classifier_trainer():
                 time_elapsed = time.time() - t0_epoch
 
                 print(f"{epoch_i + 1:^7} | {'-':^7} | {avg_train_loss:^12.6f} | {val_loss:^10.6f} | {val_accuracy:^9.2f} | {time_elapsed:^9.2f}", end='')
-
-
-
-                f1_score(y_true, y_pred, average='weighted')
 
                 self.writer.add_scalars(
                     'val_accuracy',
