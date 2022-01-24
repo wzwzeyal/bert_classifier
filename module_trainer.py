@@ -5,6 +5,7 @@ import numpy as np
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from bert_classifier_repo.module import BertClassifierModule
+from torch.utils.tensorboard import SummaryWriter
 import time
 
 
@@ -18,6 +19,7 @@ class bert_classifier_trainer():
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
         self.best_model_name = best_model_name
+        self.writer = SummaryWriter(f'.runs/{bert_model_name}')
 
         # Instantiate Bert Classifier
         self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=freeze_bert)
@@ -228,6 +230,10 @@ class bert_classifier_trainer():
 
                 print(f"{epoch_i + 1:^7} | {'-':^7} | {avg_train_loss:^12.6f} | {val_loss:^10.6f} | {val_accuracy:^9.2f} | {time_elapsed:^9.2f}", end='')
 
+                self.writer.add_scalars(
+                    'val_accuracy',
+                    { 'val_accuracy' : val_accuracy},
+                    epoch_i, )
                 #-- Save best model (early stopping):
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
