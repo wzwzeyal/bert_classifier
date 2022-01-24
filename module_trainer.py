@@ -4,7 +4,7 @@ import transformers
 import numpy as np
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from bert_classifier.module import BertClassifierModule
+from bert_classifier_repo.module import BertClassifierModule
 from torch.utils.tensorboard import SummaryWriter
 import time
 
