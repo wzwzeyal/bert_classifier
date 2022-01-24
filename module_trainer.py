@@ -6,6 +6,7 @@ from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from bert_classifier_repo.module import BertClassifierModule
 from torch.utils.tensorboard import SummaryWriter
+from sklearn.metrics import f1_score
 import time
 
 
@@ -135,8 +136,9 @@ class bert_classifier_trainer():
         # Compute the average accuracy and loss over the validation set.
         val_loss = np.mean(val_loss)
         val_accuracy = np.mean(val_accuracy)
+        f1 = f1_score(b_labels, preds, average='weighted')
 
-        return val_loss, val_accuracy
+        return val_loss, val_accuracy, f1
 
     #def train(model, train_dataloader, val_dataloader=None, epochs=4, evaluation=False):
     def train(self, epochs=4, evaluation=False):
@@ -223,16 +225,20 @@ class bert_classifier_trainer():
             if evaluation == True:
                 # After the completion of each training epoch, measure the model's performance
                 # on our validation set.
-                val_loss, val_accuracy = self.evaluate()
+                val_loss, val_accuracy, f1 = self.evaluate()
 
                 # Print performance over the entire training data
                 time_elapsed = time.time() - t0_epoch
 
                 print(f"{epoch_i + 1:^7} | {'-':^7} | {avg_train_loss:^12.6f} | {val_loss:^10.6f} | {val_accuracy:^9.2f} | {time_elapsed:^9.2f}", end='')
 
+
+
+                f1_score(y_true, y_pred, average='weighted')
+
                 self.writer.add_scalars(
                     'val_accuracy',
-                    { 'val_accuracy' : val_accuracy},
+                    { 'val_accuracy' : val_accuracy, 'f1': f1},
                     epoch_i, )
 
                 self.writer.flush()
