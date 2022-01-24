@@ -19,7 +19,7 @@ class bert_classifier_trainer():
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
         self.best_model_name = best_model_name
-        self.writer = SummaryWriter(f'.runs/{bert_model_name}')
+        self.writer = SummaryWriter(f'./runs/{bert_model_name}')
 
         # Instantiate Bert Classifier
         self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=freeze_bert)
