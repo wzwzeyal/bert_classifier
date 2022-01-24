@@ -4,8 +4,12 @@ import transformers
 import numpy as np
 from transformers import AdamW, get_linear_schedule_with_warmup
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+<<<<<<< HEAD
 from bert_classifier.module import BertClassifierModule
 from torch.utils.tensorboard import SummaryWriter
+=======
+from bert_classifier_repo.module import BertClassifierModule
+>>>>>>> 256f3a9c952e58f4cb83119a61fcaaeece5f7eb4
 import time
 
 
@@ -13,7 +17,7 @@ import time
 
 
 class bert_classifier_trainer():
-    def __init__(self, max_len, batch_size, bert_model_name, epochs=4):
+    def __init__(self, max_len, batch_size, bert_model_name, best_model_name, freeze_bert=False, epochs=4):
         self.max_len  = max_len
         self.batch_size = batch_size
         self.bert_model_name = bert_model_name#initialize_model(bert_model_name, epochs)
@@ -21,7 +25,23 @@ class bert_classifier_trainer():
         self.loss_fn = nn.CrossEntropyLoss()
         self.tokenizer = transformers.BertTokenizer.from_pretrained(bert_model_name)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") 
+<<<<<<< HEAD
         self.writer = SummaryWriter(f'.runs/{bert_model_name}')
+=======
+        self.best_model_name = best_model_name
+
+        # Instantiate Bert Classifier
+        self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=freeze_bert)
+
+        # Tell PyTorch to run the model on GPU
+        self.bert_classifier.to(self.device)
+
+        # Create the optimizer
+        self.optimizer = AdamW(self.bert_classifier.parameters(),
+                        lr=5e-5,    # Default learning rate
+                        eps=1e-8    # Default epsilon value
+                        )
+>>>>>>> 256f3a9c952e58f4cb83119a61fcaaeece5f7eb4
         
     # Create a function to tokenize a set of texts
     def preprocessing_for_bert(self, data):
@@ -70,49 +90,26 @@ class bert_classifier_trainer():
         attention_masks = torch.tensor(attention_masks)
 
         return input_ids, attention_masks 
-        
-    def initialize_model(self, X_train, X_val, y_train, y_val, epochs=4):
-        train_inputs, train_masks = self.preprocessing_for_bert(X_train)
-        val_inputs, val_masks = self.preprocessing_for_bert(X_val)
 
+
+    def initialize_train_data(self, X_train, y_train):
+        train_inputs, train_masks = self.preprocessing_for_bert(X_train)
         train_labels = torch.tensor(y_train.values)
-        val_labels = torch.tensor(y_val.values)
 
         # Create the DataLoader for our training set
         train_data = TensorDataset(train_inputs, train_masks, train_labels)
         train_sampler = RandomSampler(train_data)
         self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
 
+    def initialize_val_data(self, X_val, y_val):
+        val_inputs, val_masks = self.preprocessing_for_bert(X_val)
+        val_labels = torch.tensor(y_val.values)
+
         # Create the DataLoader for our validation set
         val_data = TensorDataset(val_inputs, val_masks, val_labels)
         val_sampler = SequentialSampler(val_data)
         self.val_dataloader = DataLoader(val_data, sampler=val_sampler, batch_size=self.batch_size)
 
-
-
-        # Instantiate Bert Classifier
-        self.bert_classifier = BertClassifierModule(self.bert_model_name, freeze_bert=False)
-
-        # Tell PyTorch to run the model on GPU
-        self.bert_classifier.to(self.device)
-
-        # Create the optimizer
-        self.optimizer = AdamW(self.bert_classifier.parameters(),
-                        lr=5e-5,    # Default learning rate
-                        eps=1e-8    # Default epsilon value
-                        )
-
-        self.train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.batch_size)
-
-        # Total number of training steps
-        total_steps = len(self.train_dataloader) * epochs
-
-        # Set up the learning rate scheduler
-        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
-                                                    num_warmup_steps=0, # Default value
-                                                    num_training_steps=total_steps)
-
-   
     def evaluate(self):
         """After the completion of each training epoch, measure the model's performance
         on our validation set.
@@ -157,6 +154,14 @@ class bert_classifier_trainer():
         """
         # Start training loop
         print("Start training...\n")
+
+        # Total number of training steps
+        total_steps = len(self.train_dataloader) * epochs
+
+        # Set up the learning rate scheduler
+        self.scheduler = get_linear_schedule_with_warmup(self.optimizer,
+                                                    num_warmup_steps=0, # Default value
+                                                    num_training_steps=total_steps)
 
         best_accuracy = 0
 
@@ -242,14 +247,19 @@ class bert_classifier_trainer():
                 #-- Save best model (early stopping):
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
-                    try   : torch.save(self.batch_size.state_dict(), self.best_model_name)
-                    except: pass
-                    print(' <-- Checkpoint!')
+                    filename = f'{self.best_model_name}_{val_accuracy:^9.2f}.pt'
+                    torch.save(self.bert_classifier.state_dict(), filename)
+                    print(' <-- Checkpoint !')
                 else:
                     print('')
 
                 print("-"*70)
             print("\n")
         
+<<<<<<< HEAD
         self.writer.flush()
         print("Training complete!")
+=======
+        print("Training complete!")
+        return filename
+>>>>>>> 256f3a9c952e58f4cb83119a61fcaaeece5f7eb4
