@@ -234,6 +234,8 @@ class bert_classifier_trainer():
                     'val_accuracy',
                     { 'val_accuracy' : val_accuracy},
                     epoch_i, )
+
+                self.writer.flush()
                 #-- Save best model (early stopping):
                 if val_accuracy > best_accuracy:
                     best_accuracy = val_accuracy
