@@ -136,7 +136,7 @@ class bert_classifier_trainer():
         # Compute the average accuracy and loss over the validation set.
         val_loss = np.mean(val_loss)
         val_accuracy = np.mean(val_accuracy)
-        f1 = f1_score(b_labels.data.to('cpu'), preds.data.to('cpu'), average='weighted')
+        f1 = f1_score(b_labels.data.to('cpu'), preds.data.to('cpu'), average='weighted') * 100
 
         return val_loss, val_accuracy, f1
 
